@@ -11,9 +11,14 @@ all_chunks = []
 
 for item in data:
     chunks = chunk_text(item['content'])
-    all_chunks.extend(chunks)
-    
-embeddings = get_embeddings(all_chunks)
+    for chunk in chunks:
+        all_chunks.append([{
+            "content" : chunk,
+            "path": item["path"]
+        }])
+
+texts = [item["content"] for item in all_chunks]
+embeddings = get_embeddings(texts)
 
 store = VectorStore(len(embeddings[0]))
 store.add(embeddings, all_chunks)
