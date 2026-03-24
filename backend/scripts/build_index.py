@@ -1,7 +1,7 @@
-from ingest import load_repo
+from backend.core.ingest import load_repo
 from utils.chunking import chunk_text
-from embedding import get_embeddings
-from vector_store import VectorStore
+from backend.core.embedding import get_embeddings
+from backend.core.vector_store import VectorStore
 
 repo_url = "https://github.com/psf/requests"
 
