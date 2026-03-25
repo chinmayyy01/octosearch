@@ -1,0 +1,6 @@
+pathspec
+sentence-transformers
+faiss-cpu
+groq
+python-dotenv
+rank-bm25

@@ -31,7 +31,7 @@ print("Index ready.\n")
 
 query = "How is authentication implemented?"
 
-answer, results = rag_query(store, query)
+answer, results = rag_query(store, all_chunks, query)
 
 print("=== ANSWER ===\n")
 print(answer)
