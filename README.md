@@ -1,4 +1,4 @@
-````markdown
+
 # OctoSearch
 
 OctoSearch is a codebase understanding system that allows users to query any GitHub repository using natural language. It uses a retrieval augmented generation (RAG) pipeline to analyze source code and generate structured explanations with source references.
@@ -75,7 +75,7 @@ octosearch/
 └── README.md
 ````
 
----
+
 
 ## Workflow
 
