@@ -1,31 +1,39 @@
+````markdown
 # OctoSearch
 
-OctoSearch is a codebase understanding system that allows users to query any GitHub repository using natural language. It uses a retrieval augmented generation pipeline to analyze source code and generate structured explanations.
+OctoSearch is a codebase understanding system that allows users to query any GitHub repository using natural language. It uses a retrieval augmented generation (RAG) pipeline to analyze source code and generate structured explanations with source references.
+
+---
 
 ## Features
 
-Dynamic repository ingestion using GitHub URLs  
-Hybrid retrieval using semantic embeddings and keyword search  
-Structured answers with clear explanations of code components  
-Source attribution with file paths and code snippets  
-Full stack system with React frontend and FastAPI backend  
+- Dynamic repository ingestion using GitHub URLs  
+- Hybrid retrieval using semantic embeddings and keyword search  
+- Structured answers with clear explanations of code components  
+- Source attribution with file paths and code snippets  
+- Full stack system with React frontend and FastAPI backend  
+
+---
 
 ## Architecture
 
-Frontend  
-React with TailwindCSS for user interaction  
+### Frontend
+- React  
+- TailwindCSS  
 
-Backend  
-FastAPI for API handling  
+### Backend
+- FastAPI  
 
-Core System  
-Repository ingestion and parsing  
-Text chunking with overlap  
-Embedding generation using sentence transformers  
-Vector search using FAISS  
-Keyword search using BM25  
-Hybrid retrieval combining both approaches  
-Large language model for answer generation  
+### Core System
+- Repository ingestion and parsing  
+- Text chunking with overlap  
+- Embedding generation using sentence transformers  
+- Vector search using FAISS  
+- Keyword search using BM25  
+- Hybrid retrieval combining semantic and keyword search  
+- Large language model for answer generation  
+
+---
 
 ## Folder Structure
 
@@ -65,58 +73,68 @@ octosearch/
 │
 ├── .gitignore
 └── README.md
+````
+
+---
 
 ## Workflow
 
-User provides a GitHub repository URL  
-Backend clones and processes the repository  
-Code is split into chunks and embedded  
-A vector index is created for retrieval  
-User asks a question  
-System retrieves relevant chunks using hybrid search  
-LLM generates a structured answer based on retrieved context  
+1. User provides a GitHub repository URL
+2. Backend clones and processes the repository
+3. Code is split into chunks and embedded
+4. A vector index is created for retrieval
+5. User asks a question
+6. System retrieves relevant chunks using hybrid search
+7. LLM generates a structured answer based on retrieved context
+
+---
 
 ## API Endpoints
 
 ### POST /load_repo
-Loads and indexes a repository  
+
+Loads and indexes a repository
 
 ### POST /query
-Returns an answer and source snippets for a query  
+
+Returns an answer along with source snippets
 
 ### GET /
-Returns system status  
+
+Returns system status
+
+---
 
 ## Installation
 
-### Clone the repository
+### Clone the Repository
 
 ```bash
 git clone https://github.com/your-username/octosearch.git
 cd octosearch
 ```
 
-````markdown
-# Project Setup & Usage Guide
+---
 
-## Overview
-This project allows you to load a GitHub repository, index its codebase, and query it using an LLM to get structured answers with source references.
+## Setup
 
-## Backend Setup
+### Backend Setup
 
 ```bash
 cd backend
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-````
+```
 
-## Frontend Setup
+### Frontend Setup
 
 ```bash
 cd frontend
 npm install
 ```
+
+---
 
 ## Running the Project
 
@@ -136,9 +154,11 @@ npm run dev
 
 ### Open in Browser
 
-```
+```text
 http://localhost:5173
 ```
+
+---
 
 ## Usage
 
@@ -147,17 +167,21 @@ http://localhost:5173
 * Ask questions about the codebase
 * View structured answers and source references
 
+---
+
 ## Limitations
 
-* Indexing is done per repository and may take time
+* Indexing is performed per repository and may take time
 * Performance depends on repository size
 * Answers are limited to retrieved context
+
+---
 
 ## Future Improvements
 
 * Caching indexed repositories
 * Improved ranking strategies
-* Better UI and interaction
+* Enhanced UI and interaction
 * VS Code extension integration
 
 ```
