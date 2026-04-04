@@ -1,117 +1,126 @@
-import { useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { useEffect, useRef, useState } from "react";
+import ChatPanel from "./components/chat/ChatPanel";
+import AppHeader from "./components/layout/AppHeader";
+import LoadingProgress from "./components/load/LoadingProgress";
+import RepoConnect from "./components/load/RepoConnect";
+import { INDEXING_STEPS, PHASES } from "./constants/app";
+import { askCodebase, loadRepository } from "./services/octoApi";
+import "./styles/app.css";
 
 export default function App() {
+  const [phase, setPhase] = useState(PHASES.LOAD);
+  const [repoUrl, setRepoUrl] = useState("");
+  const [repoLabel, setRepoLabel] = useState("");
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState([]);
-  const [repoUrl, setRepoUrl] = useState("");
+  const [isThinking, setIsThinking] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+  const messagesEndRef = useRef(null);
+  const queryInputRef = useRef(null);
 
-  const sendQuery = async () => {
-    if (!query) return;
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isThinking]);
 
-    const newMessages = [...messages, { role: "user", text: query }];
-    setMessages(newMessages);
+  useEffect(() => {
+    if (phase === PHASES.CHAT && queryInputRef.current) {
+      queryInputRef.current.focus();
+    }
+  }, [phase]);
 
-    setQuery("");
-
-    const res = await fetch("http://127.0.0.1:8000/query", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ query }),
-    });
-
-    const data = await res.json();
-
-    if (data.message) {
-      setMessages([
-        ...newMessages,
-        { role: "ai", text: data.message, sources: [] },
-      ]);
+  const loadRepo = async () => {
+    const url = repoUrl.trim();
+    if (!url) {
       return;
     }
 
-    setMessages([
-      ...newMessages,
-      {
-        role: "ai",
-        text: data.answer,
-        sources: data.sources,
-      },
-    ]);
+    const parts = url.replace(/\/$/, "").split("/");
+    setRepoLabel(parts.slice(-2).join("/") || url);
+    setPhase(PHASES.LOADING);
+    setActiveStep(0);
+
+    const stepTimer = setInterval(() => {
+      setActiveStep((previous) => {
+        if (previous < INDEXING_STEPS.length - 2) {
+          return previous + 1;
+        }
+
+        clearInterval(stepTimer);
+        return previous;
+      });
+    }, 1600);
+
+    try {
+      await loadRepository(url);
+    } catch (_) {
+      // Keep the current optimistic flow and let users query after indexing transition.
+    }
+
+    clearInterval(stepTimer);
+    setActiveStep(INDEXING_STEPS.length - 1);
+    setTimeout(() => setPhase(PHASES.CHAT), 700);
+  };
+
+  const sendQuery = async () => {
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery || isThinking) {
+      return;
+    }
+
+    setMessages((previous) => [...previous, { role: "user", text: normalizedQuery }]);
+    setQuery("");
+    setIsThinking(true);
+
+    try {
+      const data = await askCodebase(normalizedQuery);
+      setMessages((previous) => [
+        ...previous,
+        {
+          role: "ai",
+          text: data.message ?? data.answer,
+          sources: data.sources ?? [],
+        },
+      ]);
+    } catch (_) {
+      setMessages((previous) => [
+        ...previous,
+        {
+          role: "ai",
+          text: "Could not reach the server. Make sure the backend is running on port 8000.",
+          sources: [],
+        },
+      ]);
+    } finally {
+      setIsThinking(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex justify-center">
-      <div className="w-full max-w-2xl p-6">
-        <h1 className="text-3xl font-bold mb-4">🐙 OctoSearch</h1>
+    <div className="wrap">
+      <AppHeader />
 
-        <div className="space-y-4">
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`p-3 rounded ${
-                msg.role === "user"
-                  ? "bg-blue-600"
-                  : "bg-slate-700"
-              }`}
-            >
-              <div className="prose prose-invert max-w-none">
-                <ReactMarkdown>{msg.text}</ReactMarkdown>
-              </div>
+      {phase === PHASES.LOAD && (
+        <RepoConnect repoUrl={repoUrl} onRepoUrlChange={setRepoUrl} onSubmit={loadRepo} />
+      )}
 
-              {msg.sources && msg.sources.length > 0 && (
-                <div className="mt-2 text-sm text-slate-300">
-                  <b>Sources:</b>
-                  {msg.sources.map((s, idx) => (
-                    <div key={idx}>{s.path}</div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+      {phase === PHASES.LOADING && (
+        <LoadingProgress repoLabel={repoLabel} steps={INDEXING_STEPS} activeStep={activeStep} />
+      )}
 
-        <input
-          className="w-full p-2 rounded text-black mb-2"
-          value={repoUrl}
-          onChange={(e) => setRepoUrl(e.target.value)}
-          placeholder="Enter GitHub repo URL"
+      {phase === PHASES.CHAT && (
+        <ChatPanel
+          repoLabel={repoLabel}
+          messages={messages}
+          isThinking={isThinking}
+          messagesEndRef={messagesEndRef}
+          query={query}
+          queryInputRef={queryInputRef}
+          onQueryChange={setQuery}
+          onSendQuery={sendQuery}
         />
-
-        <button
-          onClick={async () => {
-            await fetch("http://127.0.0.1:8000/load_repo", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ repo_url: repoUrl }),
-            });
-
-            alert("Repo loading started. Wait a few seconds.");
-          }}
-          className="bg-purple-600 px-4 py-2 rounded mb-4"
-        >
-          Load Repo
-        </button>
-        
-        <div className="mt-6 flex gap-2">
-          <input
-            className="flex-1 p-2 rounded text-black"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask about the codebase..."
-          />
-          <button
-            onClick={sendQuery}
-            className="bg-green-600 px-4 rounded"
-          >
-            Ask
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
