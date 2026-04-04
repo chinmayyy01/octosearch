@@ -4,3 +4,5 @@ faiss-cpu
 groq
 python-dotenv
 rank-bm25
+fastapi
+uvicorn
