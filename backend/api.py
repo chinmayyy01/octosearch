@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from threading import Thread
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 from core.ingest import load_repo
 from core.embedding import get_embeddings
@@ -11,9 +12,12 @@ from utils.chunking import chunk_text
 
 app = FastAPI()
 
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
+cors_origins = [origin.strip() for origin in allowed_origins.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
