@@ -55,7 +55,14 @@ export default function App() {
     try {
       await loadRepository(url);
     } catch (_) {
-      // Keep the current optimistic flow and let users query after indexing transition.
+      setMessages((previous) => [
+        ...previous,
+        {
+          role: "ai",
+          text: "Indexing has started but the server is still waking up or processing. You can continue to chat; if indexing is not ready yet, I will tell you to wait.",
+          sources: [],
+        },
+      ]);
     }
 
     clearInterval(stepTimer);
