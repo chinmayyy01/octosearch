@@ -4,11 +4,11 @@ from threading import Thread
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
-from core.ingest import load_repo
-from core.embedding import get_embeddings
-from core.vector_store import VectorStore
-from core.rag import rag_query
-from utils.chunking import chunk_text
+from backend.core.ingest import load_repo
+from backend.core.embedding import get_embeddings
+from backend.core.vector_store import VectorStore
+from backend.core.rag import rag_query
+from backend.utils.chunking import chunk_text
 
 app = FastAPI()
 
