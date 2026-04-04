@@ -282,12 +282,19 @@ body::before {
   flex-direction: column;
 }
 
+.chat-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
 .repo-tag {
   display: inline-flex;
   width: fit-content;
   align-items: center;
   gap: 8px;
-  margin-bottom: 24px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: rgba(65, 98, 70, 0.08);
@@ -295,6 +302,59 @@ body::before {
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.66rem;
   color: var(--green);
+}
+
+.backend-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #f3ebdd;
+  color: var(--ink-3);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.62rem;
+  padding: 0.35rem 0.62rem;
+  text-transform: lowercase;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--ink-3);
+}
+
+.backend-status.ready {
+  border-color: rgba(65, 98, 70, 0.45);
+  background: rgba(65, 98, 70, 0.1);
+  color: var(--green);
+}
+
+.backend-status.ready .status-dot {
+  background: var(--green);
+}
+
+.backend-status.building {
+  border-color: rgba(126, 90, 52, 0.5);
+  background: rgba(126, 90, 52, 0.1);
+  color: var(--accent);
+}
+
+.backend-status.building .status-dot,
+.backend-status.checking .status-dot {
+  background: var(--accent);
+  animation: blink 1.4s ease-in-out infinite;
+}
+
+.backend-status.offline {
+  border-color: rgba(143, 79, 65, 0.45);
+  background: rgba(143, 79, 65, 0.1);
+  color: #8f4f41;
+}
+
+.backend-status.offline .status-dot {
+  background: #8f4f41;
 }
 
 .live-dot {

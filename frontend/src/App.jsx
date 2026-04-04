@@ -4,7 +4,7 @@ import AppHeader from "./components/layout/AppHeader";
 import LoadingProgress from "./components/load/LoadingProgress";
 import RepoConnect from "./components/load/RepoConnect";
 import { INDEXING_STEPS, PHASES } from "./constants/app";
-import { askCodebase, loadRepository } from "./services/octoApi";
+import { askCodebase, getBackendHealth, loadRepository } from "./services/octoApi";
 import "./styles/app.css";
 
 export default function App() {
@@ -15,6 +15,7 @@ export default function App() {
   const [messages, setMessages] = useState([]);
   const [isThinking, setIsThinking] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const [backendStatus, setBackendStatus] = useState("checking");
   const messagesEndRef = useRef(null);
   const queryInputRef = useRef(null);
 
@@ -30,6 +31,38 @@ export default function App() {
     }
   }, [phase]);
 
+  useEffect(() => {
+    if (phase !== PHASES.LOADING && phase !== PHASES.CHAT) {
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    const syncBackendStatus = async () => {
+      try {
+        const health = await getBackendHealth();
+        if (!isMounted) {
+          return;
+        }
+
+        const normalized = health?.status === "ready" ? "ready" : "building";
+        setBackendStatus(normalized);
+      } catch (_) {
+        if (isMounted) {
+          setBackendStatus("offline");
+        }
+      }
+    };
+
+    syncBackendStatus();
+    const poll = setInterval(syncBackendStatus, 5000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(poll);
+    };
+  }, [phase]);
+
   const loadRepo = async () => {
     const url = repoUrl.trim();
     if (!url) {
@@ -39,6 +72,7 @@ export default function App() {
     const parts = url.replace(/\/$/, "").split("/");
     setRepoLabel(parts.slice(-2).join("/") || url);
     setPhase(PHASES.LOADING);
+    setBackendStatus("building");
     setActiveStep(0);
 
     const stepTimer = setInterval(() => {
@@ -90,12 +124,15 @@ export default function App() {
           sources: data.sources ?? [],
         },
       ]);
-    } catch (_) {
+    } catch (error) {
+      const isTimeout = error?.name === "AbortError";
       setMessages((previous) => [
         ...previous,
         {
           role: "ai",
-          text: "Could not reach the server. Make sure the backend is running on port 8000.",
+          text: isTimeout
+            ? "The backend is taking too long to respond (likely cold start or heavy indexing). Please wait a bit and try again."
+            : "Could not reach the server. Make sure the backend is running and accessible.",
           sources: [],
         },
       ]);
@@ -119,6 +156,7 @@ export default function App() {
       {phase === PHASES.CHAT && (
         <ChatPanel
           repoLabel={repoLabel}
+          backendStatus={backendStatus}
           messages={messages}
           isThinking={isThinking}
           messagesEndRef={messagesEndRef}

@@ -3,6 +3,7 @@ import QueryComposer from "./QueryComposer";
 
 export default function ChatPanel({
   repoLabel,
+  backendStatus,
   messages,
   isThinking,
   messagesEndRef,
@@ -13,9 +14,15 @@ export default function ChatPanel({
 }) {
   return (
     <section className="phase-chat">
-      <div className="repo-tag">
-        <div className="live-dot" />
-        {repoLabel}
+      <div className="chat-meta">
+        <div className="repo-tag">
+          <div className="live-dot" />
+          {repoLabel}
+        </div>
+        <div className={`backend-status ${backendStatus}`}>
+          <span className="status-dot" />
+          backend {backendStatus}
+        </div>
       </div>
 
       <MessageList messages={messages} isThinking={isThinking} messagesEndRef={messagesEndRef} />
