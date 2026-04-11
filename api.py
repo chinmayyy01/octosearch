@@ -2,7 +2,7 @@ import importlib.util
 import os
 import sys
 
-# Render may run from repo root; ensure backend modules are importable.
+# Root entrypoint: ensure backend modules are importable from repo root.
 BACKEND_DIR = os.path.join(os.path.dirname(__file__), "backend")
 BACKEND_API_FILE = os.path.join(BACKEND_DIR, "api.py")
 
