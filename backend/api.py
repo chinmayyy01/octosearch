@@ -77,22 +77,26 @@ def load_new_repo(req: RepoRequest):
 
 @app.post("/query")
 def query_codebase(req: QueryRequest):
-    with index_lock:
-        if not ready:
-            return {"message": "Index building... please wait"}
+    try:
+        with index_lock:
+            if not ready:
+                return {"message": "Index building... please wait"}
 
-        answer, results = rag_query(store, all_chunks, req.query)
+            answer, results = rag_query(store, all_chunks, req.query)
 
-        return {
-            "answer": answer,
-            "sources": [
-                {
-                    "path": r["path"],
-                    "snippet": r["content"][:200] + "..."
-                }
-                for r in results
-            ]
-        }
+            return {
+                "answer": answer,
+                "sources": [
+                    {
+                        "path": r["path"],
+                        "snippet": r["content"][:200] + "..."
+                    }
+                    for r in results
+                ]
+            }
+    except Exception as e:
+        print(f"Query error: {e}")
+        return {"message": f"Error processing query: {str(e)}"}
 
 @app.get("/")
 def health():
