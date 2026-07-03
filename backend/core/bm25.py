@@ -7,5 +7,5 @@ class BM25Retriever:
         self.retriever = LangChainBM25Retriever.from_documents(documents)
 
     def search(self, query, k=5):
-        results = self.retriever.get_relevant_documents(query, k=k)
+        results = self.retriever.invoke(query, config={"runnable": {"top_k": k}})
         return [{"content": doc.page_content, "path": doc.metadata.get("path", "")} for doc in results]
