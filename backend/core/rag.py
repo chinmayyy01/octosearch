@@ -5,7 +5,7 @@ def rag_query(store, all_chunks, query, k=5):
     vector_results = store.search(query, k=k)
 
     texts = [c["content"] for c in all_chunks]
-    metadatas = [c["path"] for c in all_chunks]
+    metadatas = [{"path": c["path"]} for c in all_chunks]
     bm25 = BM25Retriever(texts, metadatas)
     bm25_results = bm25.search(query, k=k)
 
