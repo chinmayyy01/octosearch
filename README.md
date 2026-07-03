@@ -1,134 +1,58 @@
 # OctoSearch
 
-OctoSearch is a full-stack codebase Q&A app. It clones a GitHub repository, builds a hybrid retrieval index (vector + BM25), and answers natural-language questions with grounded code snippets.
+OctoSearch lets you ask questions about any GitHub repository in plain English. It fetches the code, builds a search index, and gives you answers with actual code snippets as references.
 
-## Features
+Live demo: https://octosearch-cm.vercel.app
 
-- Query public GitHub repositories in natural language.
-- Hybrid retrieval with FAISS embeddings + BM25 keyword search.
-- Structured LLM answers with source snippets.
-- FastAPI backend and React + Vite frontend.
+The app uses a hybrid search approach combining vector embeddings and keyword matching to find the most relevant code, then uses an LLM to generate helpful responses.
 
-## Tech Stack
+## How it works
 
-- Backend: FastAPI, Uvicorn
-- Retrieval: sentence-transformers, FAISS, rank-bm25
-- LLM: Groq API (`llama-3.3-70b-versatile`)
-- Frontend: React, Vite, Tailwind CSS
+When you paste a GitHub repository URL, the app fetches all the code files directly from GitHub's API (no cloning needed). It then chunks the code into smaller pieces, creates embeddings for each chunk, and builds both a vector search index and a BM25 keyword index. When you ask a question, it searches both indexes to find the most relevant code snippets, and passes those to the LLM to generate a grounded answer.
 
-## Architecture
+## Tech stack
 
-1. User submits a repository URL.
-2. Backend clones and parses code files.
-3. Files are chunked and embedded.
-4. Chunks are indexed in FAISS and BM25.
-5. Query retrieves top hybrid matches.
-6. LLM generates a structured answer from retrieved context.
+The backend is built with FastAPI and uses LangChain for the retrieval pipeline. It uses sentence-transformers for embeddings, FAISS for vector storage, and Groq's Llama model for generating answers. The frontend is a React app built with Vite and Tailwind CSS.
 
-## Project Structure
+## Project structure
 
-```text
+```
 octosearch/
-|-- api.py                     # Root app entry that loads backend/api.py
-|-- README.md
-|-- requirements.txt
-|-- backend/
-|   |-- api.py                 # FastAPI app and routes
-|   |-- requirements.txt
-|   |-- core/
-|   |   |-- ingest.py          # Clone + load repository files
-|   |   |-- embedding.py       # Embedding generation
-|   |   |-- vector_store.py    # FAISS vector index
-|   |   |-- bm25.py            # BM25 retriever
-|   |   |-- rag.py             # Hybrid retrieval + answer flow
-|   |   |-- llm.py             # Groq LLM integration
-|   |-- utils/
-|   |   |-- file_loader.py
-|   |   |-- chunking.py
-|-- frontend/
-|   |-- package.json
-|   |-- .env.example
-|   |-- src/
-|   |   |-- App.jsx
-|   |   |-- main.jsx
-|   |   |-- services/
-|   |   |   |-- octoApi.js     # Frontend API client
-|   |   |-- components/
-|   |       |-- chat/
-|   |       |-- layout/
-|   |       |-- load/
-|-- docs/
-|   |-- Screenshot1.png
-|   |-- Screenshot2.png
-|-- data/
-|   |-- repos/                 # Cloned repositories for indexing
-|-- scripts/
-|   |-- build_index.py
-|   |-- test_search.py
-|   |-- test_rag.py
+├── api.py                 Root entry point that loads the backend
+├── modal_app.py           Modal deployment configuration
+├── requirements.txt       Python dependencies
+├── backend/
+│   ├── api.py            FastAPI application and routes
+│   ├── requirements.txt
+│   ├── core/
+│   │   ├── ingest.py     GitHub API file fetching
+│   │   ├── embedding.py  Embedding generation with LangChain
+│   │   ├── vector_store.py  FAISS vector store
+│   │   ├── bm25.py       BM25 retriever
+│   │   ├── rag.py        Hybrid retrieval and answer generation
+│   │   └── llm.py        Groq LLM integration
+│   └── utils/
+│       ├── file_loader.py
+│       └── chunking.py
+└── frontend/
+    ├── package.json
+    ├── .env.example
+    └── src/
+        ├── App.jsx
+        ├── main.jsx
+        ├── services/
+        │   └── octoApi.js
+        └── components/
+            ├── chat/
+            ├── layout/
+            └── load/
 ```
 
-## Prerequisites
+## Getting started locally
 
-- Git
-- Python 3.10+
-- Node.js 18+ (Node.js 20 recommended)
-- npm 9+
-- A Groq API key
+You need Python 3.10+, Node.js 18+, and a Groq API key.
 
-## Environment Variables
-
-### Backend
-
-Required:
-
-- `GROQ_API_KEY`: API key for answer generation.
-
-Optional:
-
-- `ALLOWED_ORIGINS`: Comma-separated CORS origins.
-	Default: `http://localhost:5173,http://127.0.0.1:5173`
-
-Copy `.env.example` to `.env` in the project root, then update values:
-
-```env
-GROQ_API_KEY=your_groq_api_key_here
-ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
-```
-
-### Frontend
-
-Optional:
-
-- `VITE_API_BASE_URL`: Backend base URL.
-	Default: `http://127.0.0.1:8000`
-
-Create `frontend/.env` from `frontend/.env.example` if needed:
-
-```env
-VITE_API_BASE_URL=http://127.0.0.1:8000
-```
-
-## Installation
-
-### 1. Clone
-
-```bash
-git clone <your-repo-url>
-cd octosearch
-```
-
-### 2. Backend setup
-
-Windows PowerShell:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r backend/requirements.txt
-```
-
-macOS/Linux:
+First, set up the backend:
 
 ```bash
 python3 -m venv .venv
@@ -136,7 +60,7 @@ source .venv/bin/activate
 pip install -r backend/requirements.txt
 ```
 
-### 3. Frontend setup
+Then set up the frontend:
 
 ```bash
 cd frontend
@@ -144,106 +68,69 @@ npm install
 cd ..
 ```
 
-## Run Locally
+Create a `.env` file in the project root with your Groq API key:
 
-Start backend (from project root):
+```
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+Start the backend:
 
 ```bash
 uvicorn api:app --reload
 ```
 
-Start frontend (new terminal):
+Start the frontend in another terminal:
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Open:
+Open `http://localhost:5173` in your browser.
 
-- `http://localhost:5173`
+## Deployment
 
-## API
+The app is designed to run on Modal for the backend and Vercel for the frontend.
 
-### `POST /load_repo`
+For Modal deployment, you need to set up secrets with your API keys:
 
-Starts asynchronous indexing for a repository.
-
-Request body:
-
-```json
-{ "repo_url": "https://github.com/owner/repo" }
+```bash
+modal secret create octosearch-secrets GROQ_API_KEY=your_groq_api_key
 ```
 
-Response:
+Optionally, add a GitHub token for higher API rate limits (60 requests/hour without token, 5000 with token):
 
-```json
-{ "message": "Repository loading started..." }
+```bash
+modal secret update octosearch-secrets GITHUB_TOKEN=your_github_personal_access_token
 ```
 
-### `POST /query`
+Then deploy:
 
-Queries the indexed repository.
-
-Request body:
-
-```json
-{ "query": "How does authentication work?" }
+```bash
+modal deploy modal_app.py
 ```
 
-If indexing is still running:
+For the frontend, deploy to Vercel and set the `VITE_API_BASE_URL` environment variable to your Modal backend URL.
 
-```json
-{ "message": "Index building... please wait" }
-```
+## API endpoints
 
-If ready:
+POST `/load_repo` - Starts indexing a repository
+Request: `{ "repo_url": "https://github.com/owner/repo" }`
+Response: `{ "message": "Repository loading started..." }`
 
-```json
-{
-	"answer": "...",
-	"sources": [
-		{ "path": "...", "snippet": "..." }
-	]
-}
-```
+POST `/query` - Asks a question about the indexed code
+Request: `{ "query": "How does authentication work?" }`
+Response: `{ "answer": "...", "sources": [{ "path": "...", "snippet": "..." }] }`
 
-### `GET /`
+GET `/` - Health check
+Response: `{ "status": "building" }` or `{ "status": "ready" }`
 
-Health status:
+## Common issues
 
-```json
-{ "status": "building" }
-```
+If the frontend can't reach the backend, make sure `VITE_API_BASE_URL` is set correctly in your frontend environment. For CORS issues, the backend currently allows all origins. If queries fail, verify your Groq API key is set correctly.
 
-or
-
-```json
-{ "status": "ready" }
-```
-
-## Usage
-
-1. Open the app in the browser.
-2. Paste a GitHub repository URL and load it.
-3. Wait until indexing completes.
-4. Ask questions about the codebase.
-5. Review the generated answer and source snippets.
-
-## Troubleshooting
-
-- If frontend cannot reach backend, set `VITE_API_BASE_URL` correctly.
-- If CORS errors appear, update `ALLOWED_ORIGINS`.
-- If answers fail, verify `GROQ_API_KEY` is set.
-- Initial indexing can be slow on large repositories.
-
-## Limitations
-
-- Indexing time scales with repository size.
-- LLM responses are constrained to retrieved context quality.
-- Best experience is local development with sufficient CPU/RAM.
-
-## Demo
+## Screenshots
 
 ![OctoSearch Demo 1](./docs/Screenshot1.png)
 ![OctoSearch Demo 2](./docs/Screenshot2.png)
