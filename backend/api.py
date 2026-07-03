@@ -1,11 +1,10 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from threading import Thread
+from threading import Thread, Lock
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
 from backend.core.ingest import load_repo
-from backend.core.embedding import get_embeddings
 from backend.core.vector_store import VectorStore
 from backend.core.rag import rag_query
 from backend.utils.chunking import chunk_text
@@ -26,31 +25,38 @@ app.add_middleware(
 store = None
 all_chunks = []
 ready = False
+index_lock = Lock()
 
 def build_index(repo_url):
     global store, all_chunks, ready
-    try:
-        print(f"Building index for {repo_url}...")
-        data = load_repo(repo_url)
-        all_chunks = []
-        for item in data:
-            chunks = chunk_text(item["content"], chunk_size=500, overlap=100)
-            for chunk in chunks:
-                all_chunks.append({
-                    "content": chunk,
-                    "path": item["path"]
-                })
+    with index_lock:
+        try:
+            print(f"Building index for {repo_url}...")
+            data = load_repo(repo_url)
+            all_chunks = []
+            for item in data:
+                chunks = chunk_text(item["content"], chunk_size=500, overlap=100)
+                for chunk in chunks:
+                    all_chunks.append({
+                        "content": chunk,
+                        "path": item["path"]
+                    })
 
-        texts = [c["content"] for c in all_chunks]
-        embeddings = get_embeddings(texts)
+            if not all_chunks:
+                print("ERROR: No chunks found in repository")
+                ready = False
+                return
 
-        store = VectorStore(len(embeddings[0]))
-        store.add(embeddings, all_chunks)
-        ready = True
-        print("SERVER READY")
-    except Exception as e:
-        print("ERROR:", e)
-        ready = False
+            texts = [c["content"] for c in all_chunks]
+            metadatas = [{"path": c["path"]} for c in all_chunks]
+
+            store = VectorStore()
+            store.add(texts, metadatas)
+            ready = True
+            print("SERVER READY")
+        except Exception as e:
+            print("ERROR:", e)
+            ready = False
 
 class QueryRequest(BaseModel):
     query: str
@@ -71,21 +77,22 @@ def load_new_repo(req: RepoRequest):
 
 @app.post("/query")
 def query_codebase(req: QueryRequest):
-    if not ready:
-        return {"message": "Index building... please wait"}
+    with index_lock:
+        if not ready:
+            return {"message": "Index building... please wait"}
 
-    answer, results = rag_query(store, all_chunks, req.query)
+        answer, results = rag_query(store, all_chunks, req.query)
 
-    return {
-        "answer": answer,
-        "sources": [
-            {
-                "path": r["path"],
-                "snippet": r["content"][:200] + "..."
-            }
-            for r in results
-        ]
-    }
+        return {
+            "answer": answer,
+            "sources": [
+                {
+                    "path": r["path"],
+                    "snippet": r["content"][:200] + "..."
+                }
+                for r in results
+            ]
+        }
 
 @app.get("/")
 def health():

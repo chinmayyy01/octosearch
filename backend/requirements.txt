@@ -6,3 +6,6 @@ faiss-cpu
 groq
 python-dotenv
 rank-bm25
+langchain
+langchain-community
+langchain-groq

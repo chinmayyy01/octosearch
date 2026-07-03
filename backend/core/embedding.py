@@ -1,13 +1,9 @@
-from sentence_transformers import SentenceTransformer
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
-model = None
+embeddings = None
 
-
-def _get_model():
-    global model
-    if model is None:
-        model = SentenceTransformer("all-MiniLM-L6-v2")
-    return model
-
-def get_embeddings(texts):
-    return _get_model().encode(texts)
+def get_embeddings():
+    global embeddings
+    if embeddings is None:
+        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    return embeddings

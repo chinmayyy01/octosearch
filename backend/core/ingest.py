@@ -1,6 +1,6 @@
 import subprocess
 import os
-from utils.file_loader import get_code_files, load_file_content
+from backend.utils.file_loader import get_code_files, load_file_content
 
 def clone_repo(repo_url, target_dir="data/repos"):
     os.makedirs(target_dir, exist_ok=True)

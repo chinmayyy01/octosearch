@@ -1,13 +1,11 @@
-from rank_bm25 import BM25Okapi
+from langchain_community.retrievers import BM25Retriever as LangChainBM25Retriever
+from langchain_core.documents import Document
 
 class BM25Retriever:
-    def __init__(self, texts):
-        self.texts = texts
-        self.tokenized = [text.split() for text in texts]
-        self.bm25 = BM25Okapi(self.tokenized)
+    def __init__(self, texts, metadatas):
+        documents = [Document(page_content=text, metadata=metadata) for text, metadata in zip(texts, metadatas)]
+        self.retriever = LangChainBM25Retriever.from_documents(documents)
 
     def search(self, query, k=5):
-        tokenized_query = query.split()
-        scores = self.bm25.get_scores(tokenized_query)        
-        top_k = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k]
-        return top_k
+        results = self.retriever.get_relevant_documents(query, k=k)
+        return [{"content": doc.page_content, "path": doc.metadata.get("path", "")} for doc in results]

@@ -1,17 +1,13 @@
-from core.embedding import get_embeddings
-from core.llm import generate_answer
-from core.bm25 import BM25Retriever
-
+from backend.core.llm import generate_answer
+from backend.core.bm25 import BM25Retriever
 
 def rag_query(store, all_chunks, query, k=5):
-    query_embedding = get_embeddings([query])[0]
-    vector_results = store.search(query_embedding, k=k)
+    vector_results = store.search(query, k=k)
 
     texts = [c["content"] for c in all_chunks]
-    bm25 = BM25Retriever(texts)
-    bm25_indices = bm25.search(query, k=k)
-
-    bm25_results = [all_chunks[i] for i in bm25_indices]
+    metadatas = [c["path"] for c in all_chunks]
+    bm25 = BM25Retriever(texts, metadatas)
+    bm25_results = bm25.search(query, k=k)
 
     combined = vector_results + bm25_results
 

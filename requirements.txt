@@ -6,3 +6,6 @@ python-dotenv
 rank-bm25
 fastapi
 uvicorn
+langchain
+langchain-community
+langchain-groq
